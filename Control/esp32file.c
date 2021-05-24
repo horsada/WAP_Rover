@@ -26,6 +26,7 @@ void initWiFi() {
     delay(1000);
   }
   WiFi.softAP(ssid2, pw2);
+  //do we need int channel for this?
 
   Serial.println(WiFi.localIP());
 }
@@ -35,6 +36,9 @@ void setup() {
   Serial.begin(115200);
   initWiFi();
 }
+
+void uartcom()
+{}
 
 void command()
 {}
