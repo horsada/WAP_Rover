@@ -1,6 +1,6 @@
-#include <wifi.h>
+#include <WiFi.h>
 
-const char* ssid = "PV";
+const char* ssid = "Sindhu";
 const char* pw = "Butterchicken";
 const char* ssid2 = "waplocal";
 const char* pw2 = "localwap";
@@ -20,15 +20,17 @@ IPAddress secondaryDNS(8, 8, 4, 4);
 void initWiFi() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, pw);
-  Serial.print("Connecting to WiFi ..");
+  Serial.print("Connecting to WiFi:");
+  Serial.println(ssid);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
     delay(1000);
   }
-  WiFi.softAP(ssid2, pw2);
-  //do we need int channel for this?
 
-  Serial.println(WiFi.localIP());
+
+  //WiFi.softAP(ssid2, pw2);
+
+
 }
 
 
@@ -37,9 +39,6 @@ void setup() {
   initWiFi();
 }
 
-void uartcom()
-{}
-
 void command()
 {}
 
@@ -47,15 +46,26 @@ void intra()
 {}
 
 
-void main ()
+void loop ()
 {
 //loop to reconnect to wifi
-if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) {
-  Serial.print(millis());
-  Serial.println("Reconnecting to WiFi...");
-  WiFi.disconnect();
-  WiFi.reconnect();
-  previousMillis = currentMillis;
-}
+//if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) {
+  //Serial.print(millis());
+  //Serial.println("Reconnecting to WiFi...");
+  //WiFi.disconnect();
+  //WiFi.reconnect();
+  //previousMillis = currentMillis;
+  Serial.println("starting up");
+  setup();
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("Error: Could Not Connect to WiFi Network");
+  }
+  else
+  {
+    Serial.println("Success! connected to WiFi with local IP: ");
+    Serial.println(WiFi.localIP());
+  }
+
 
 }
