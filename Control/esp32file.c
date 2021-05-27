@@ -14,7 +14,7 @@ unsigned long previousMillis = 0;
 unsigned long interval = 30000;
 
 //Setting Static IP address, may need to change on integration side
-IPAddress local_IP(192, 168, 1, 184);
+IPAddress local_IP(192, 168, 1, 15);
 //Setting Gateway IP address, may need to change on integration side
 IPAddress gateway(192, 168, 1, 1);
 
@@ -52,20 +52,21 @@ void initWiFi() {
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  server.begin();
 }
 
 
 void setup() {
   Serial.begin(115200);
+  while(!Serial)
+  {}
   initWiFi();
-  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy
-  Serial3.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive
+  Serial1.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy
+  Serial2.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive
 }
 
 void batterycheck()
 {
-  batterylevel = Serial2.read();
+  batterylevel = Serial1.read();
   Serial.print("Rover Battery level = ");
   Serial.println(batterylevel, DEC);
 }
@@ -85,7 +86,8 @@ void loop ()
   //previousMillis = currentMillis;
   Serial.println("starting up");
   setup();
-
+  Serial.println("finished");
+  delay(5000);
 
 
 }
