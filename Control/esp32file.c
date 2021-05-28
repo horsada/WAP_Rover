@@ -69,8 +69,14 @@ void batterycheck()
   batterylevel = Serial1.read();
   Serial.print("Rover Battery level = ");
   Serial.println(batterylevel, DEC);
+  sendbatteryinfo(batterylevel);
+  delay(50000);
 }
 
+void sendbatteryinfo (int n)
+{
+  //implement send to server. Server will have to figure out how to display raw data
+}
 void intra()
 {}
 
