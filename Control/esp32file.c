@@ -37,8 +37,8 @@ int dist;
 int driveinstr;
 int newdriveinstr; //temp for new incoming drive instr
 int poweron = 1; //when 0, while loop breaks and control shuts down
-
-
+int estop = 0; //when 1, Rover stops moving altogether in order to avoid accident. Direct Communication from Vision to Drive
+int warn = 0; //decided by vision for above.
 /*void uartsetup(){
   const uart_port_t uart_num = UART_NUM_2;
 uart_config_t uart_config = {
@@ -84,6 +84,14 @@ void setup() {
   //server connection
 }
 
+void emergencystop()
+{
+  if (warn == 1)
+  {
+    estop = 1;
+  }
+}
+
 void batterycheck()
 {
   batterylevel = Serial1.read();
@@ -117,9 +125,12 @@ void senddistinfo(int n)
 
 void receivenewdriveinstr()
 {
-
+  if (estop != 1)
+  {
   newdriveinstr = 0; //get server write new instr implemented
-  if (newdriveinstr !== "idle")
+  }
+
+  else if (newdriveinstr !== "idle")
   {
     driveinstr = newdriveinstr;
   }
@@ -149,6 +160,7 @@ void loop ()
   while (poweron)
   {
     batterycheck();
+    emergencystop(warn);
     receivenewdriveinstr();
     senddriveinstr(driveinstr);
     receivedrivedist();
