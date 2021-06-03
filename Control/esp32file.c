@@ -1,9 +1,9 @@
 #include <WiFi.h>
 #include "SPI.h"
-
+//pin def for UART for energy
 #define RXD2 16
 #define TXD2 17
-
+//pin def for UART for drive
 #define TXD1 10
 #define RXD1 9
 
