@@ -127,13 +127,17 @@ void receivenewdriveinstr()
 {
   if (estop != 1)
   {
-  newdriveinstr = 0; //get server write new instr implemented
+  driveinstr = "stop"; //get server write new instr implemented
   }
 
   else if (newdriveinstr !== "idle")
   {
     driveinstr = newdriveinstr;
   }
+  else
+    {
+      driveinstr = 0;
+    }
 
 }
 
