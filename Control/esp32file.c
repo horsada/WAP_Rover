@@ -7,6 +7,8 @@
 #define TXD1 10
 #define RXD1 9
 
+//internet settings to connect to HTTPS server:
+
 const char* ssid = "Sindhu"; //change this to your wifi on integration side
 const char* pw = "Butterchicken"; //likewise
 //const char* ssid2 = "waplocal";
@@ -28,9 +30,13 @@ char start_char = ‘@’;
 char end_char = ‘#’;
 char sep_char = ‘:’;
 
+// rover parameters:
+
 int batterylevel;
 int dist;
 int driveinstr;
+int newdriveinstr; //temp for new incoming drive instr
+int poweron = 1; //when 0, while loop breaks and control shuts down
 
 
 /*void uartsetup(){
@@ -48,6 +54,8 @@ ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
 }
 */
 
+//fuction calls for rover functionality:
+
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pw);
@@ -58,9 +66,9 @@ void initWiFi() {
     delay(1000);
   }
   Serial.println("");
-  Serial.println("WiFi connected.");
+  Serial.print("WiFi connected.");
   Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.print(WiFi.localIP());
 }
 
 
@@ -69,10 +77,10 @@ void setup() {
   while(!Serial)
   {}
   initWiFi();
-  Serial1.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy
+  Serial1.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
   Serial2.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive
   //spi protocol for vision
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   //server connection
 }
 
@@ -88,12 +96,14 @@ void sendbatteryinfo (int n)
 {
   //implement send to server. Server will have to figure out how to display raw data
 }
-void intra()
-{}
+void poweroff()
+{
+  poweron = 1; //implement on/off from HTTPS server
+}
 
 void receivedrivedist()
 {
-  dist = Serial2.read();
+  dist = Serial2.read(); //do I require to decode this info? also if 8bit count am I limited to 2^8?
   Serial.print("Distance Travelled = ");
   Serial.println(dist, DEC);
   senddistinfo(dist);
@@ -107,13 +117,21 @@ void senddistinfo(int n)
 
 void receivenewdriveinstr()
 {
-  //implement receive from server
+
+  newdriveinstr = 0; //get server write new instr implemented
+  if (newdriveinstr !== "idle")
+  {
+    driveinstr = newdriveinstr;
+  }
+
 }
 
-void senddriveinstr(int n)
+void senddriveinstr(int n) //where n comes from receivenewdriveinstr
 {
-  Serial2.write((n)val16);
+  Serial2.write((n)val16); //is this required because base value of int is 16 bits long
 }
+
+//main execute loop
 void loop ()
 {
 //loop to reconnect to wifi
@@ -123,15 +141,19 @@ void loop ()
   //WiFi.disconnect();
   //WiFi.reconnect();
   //previousMillis = currentMillis;
+//setup section
   Serial.println("starting up");
   setup();
-  Serial.println("finished");
-  while (1)
+  Serial.println("setup finished");
+//rover function, will get stuck in while loop
+  while (poweron)
   {
     batterycheck();
     receivenewdriveinstr();
     senddriveinstr(driveinstr);
     receivedrivedist();
+
+    poweroff();
 
   }
 
