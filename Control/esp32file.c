@@ -6,7 +6,13 @@
 //pin def for UART for drive
 #define TXD1 10
 #define RXD1 9
+//pin def for SPI for Vision
+#define VSPI_MISO   2
+#define VSPI_MOSI   4
+#define VSPI_SCLK   0
+#define VSPI_SS     33
 
+static const int spiClk = 1000000;
 //internet settings to connect to HTTPS server:
 
 const char* ssid = "Sindhu"; //change this to your wifi on integration side
@@ -18,7 +24,7 @@ unsigned long previousMillis = 0;
 unsigned long interval = 30000;
 
 //Setting Static IP address, may need to change on integration side
-IPAddress local_IP(192, 168, 1, 15);
+const IPAddress local_IP(192, 168, 1, 15);
 //Setting Gateway IP address, may need to change on integration side
 IPAddress gateway(192, 168, 1, 1);
 
@@ -26,12 +32,12 @@ IPAddress subnet(255, 255, 0, 0);
 IPAddress primaryDNS(8, 8, 8, 8);
 IPAddress secondaryDNS(8, 8, 4, 4);
 
-char start_char = ‘@’;
-char end_char = ‘#’;
-char sep_char = ‘:’;
+//char start_char = ‘@’;
+//char end_char = ‘#’;
+//char sep_char = ‘:’;
 
 // rover parameters:
-
+//uint8_t for 8bit wide
 int batterylevel;
 int dist;
 int driveinstr;
@@ -80,7 +86,9 @@ void setup() {
   Serial1.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
   Serial2.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive
   //spi protocol for vision
-  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  //SCLK = 0, MISO = 2, MOSI = 4, SS = 33, check if this works for GPIO
+  vspi->begin(VSPI_SCLK, VSPI_MISO, VSPI_MOSI, VSPI_SS);
+  pinMode(VSPI_SS, OUTPUT);
   //server connection
 }
 
