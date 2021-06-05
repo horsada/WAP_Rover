@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include "SPI.h"
+#include <stdio.h>
 //pin def for UART for energy
 #define RXD2 16
 #define TXD2 17
@@ -27,14 +28,12 @@ unsigned long interval = 30000;
 const IPAddress local_IP(192, 168, 1, 15);
 //Setting Gateway IP address, may need to change on integration side
 IPAddress gateway(192, 168, 1, 1);
-
+//not required, remove if going over mem
 IPAddress subnet(255, 255, 0, 0);
 IPAddress primaryDNS(8, 8, 8, 8);
 IPAddress secondaryDNS(8, 8, 4, 4);
 
-//char start_char = ‘@’;
-//char end_char = ‘#’;
-//char sep_char = ‘:’;
+
 
 // rover parameters:
 //uint8_t for 8bit wide
@@ -45,24 +44,11 @@ uint8_t newdriveinstr; //temp for new incoming drive instr
 uint8_t poweron = 1; //when 0, while loop breaks and control shuts down
 uint8_t estop = 0; //when 1, Rover stops moving altogether in order to avoid accident. Direct Communication from Vision to Drive
 uint8_t warn = 0; //decided by vision for above.
-/*void uartsetup(){
-  const uart_port_t uart_num = UART_NUM_2;
-uart_config_t uart_config = {
-    .baud_rate = 115200,
-    .data_bits = UART_DATA_8_BITS,
-    .parity = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS,
-    .rx_flow_ctrl_thresh = 122,
-};
-// Configure UART parameters
-ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
-}
-*/
+
 
 //fuction calls for rover functionality:
 
-void initWiFi() {
+void initWiFi() { //initializes wifi connection
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pw);
   Serial.print("Connecting to WiFi:");
@@ -78,7 +64,7 @@ void initWiFi() {
 }
 
 
-void setup() {
+void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   Serial.begin(115200);
   while(!Serial)
   {}
@@ -92,7 +78,7 @@ void setup() {
   //server connection
 }
 
-void emergencystop()
+void emergencystop() //direct communication between Vision and Drive. Used to stop rover if a blockage is detected
 {
   if (warn == 1)
   {
@@ -100,7 +86,7 @@ void emergencystop()
   }
 }
 
-void batterycheck()
+void batterycheck() //Energy - ESP32 - Command. Used to update GUI of battery level of the rover
 {
   batterylevel = Serial1.read();
   Serial.print("Rover Battery level = ");
@@ -108,16 +94,16 @@ void batterycheck()
   sendbatteryinfo(batterylevel);
 }
 
-void sendbatteryinfo (int n)
+void sendbatteryinfo (int n) //sends info to server of above function
 {
   //implement send to server. Server will have to figure out how to display raw data
 }
-void poweroff()
+void poweroff() //turns off ESP32
 {
   poweron = 1; //implement on/off from HTTPS server
 }
 
-void receivedrivedist()
+void receivedrivedist() //get distance travelled from arduino
 {
   dist = Serial2.read(); //do I require to decode this info? also if 8bit count am I limited to 2^8?
   Serial.print("Distance Travelled = ");
@@ -126,12 +112,12 @@ void receivedrivedist()
 
 }
 
-void senddistinfo(int n)
+void senddistinfo(int n) //sends distance to GUI
 {
   //implement send to server
 }
 
-void receivenewdriveinstr()
+void receivenewdriveinstr() //gets new instruction from the GUI
 {
   if (estop != 1)
   {
@@ -149,7 +135,7 @@ void receivenewdriveinstr()
 
 }
 
-void senddriveinstr(int n) //where n comes from receivenewdriveinstr
+void senddriveinstr(int n) //where n comes from receivenewdriveinstr, sends to Drive Arduino
 {
   Serial2.write((n)val16); //is this required because base value of int is 16 bits long
 }
@@ -157,14 +143,7 @@ void senddriveinstr(int n) //where n comes from receivenewdriveinstr
 //main execute loop
 void loop ()
 {
-//loop to reconnect to wifi
-//if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) {
-  //Serial.print(millis());
-  //Serial.println("Reconnecting to WiFi...");
-  //WiFi.disconnect();
-  //WiFi.reconnect();
-  //previousMillis = currentMillis;
-//setup section
+
   Serial.println("starting up");
   setup();
   Serial.println("setup finished");
@@ -180,6 +159,7 @@ void loop ()
     poweroff();
 
   }
+  Serial.println("rover turned off");
 
 
 }
