@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include "SPI.h"
 #include <stdio.h>
+#include <HTTPClient.h>
 //pin def for UART for energy
 #define RXD2 16
 #define TXD2 17
@@ -8,13 +9,17 @@
 #define TXD1 10
 #define RXD1 9
 //pin def for SPI for Vision, try using standard pin allignment
+/*
 #define VSPI_MISO   2
 #define VSPI_MOSI   4
 #define VSPI_SCLK   0
 #define VSPI_SS     33
-
+*/
 static const int spiClk = 1000000;
+SPIClass SPI1(HSPI);
 //internet settings to connect to HTTPS server:
+String serverName = "http://192.168.1.106:1880/update-sensor"; //change this to server IP and port
+int httpCode;
 
 const char* ssid = "Sindhu"; //change this to your wifi on integration side
 const char* pw = "Butterchicken"; //likewise
@@ -44,6 +49,7 @@ uint8_t newdriveinstr; //temp for new incoming drive instr
 uint8_t poweron = 1; //when 0, while loop breaks and control shuts down
 uint8_t estop = 0; //when 1, Rover stops moving altogether in order to avoid accident. Direct Communication from Vision to Drive
 uint8_t warn = 0; //decided by vision for above.
+String newdriveinstrimm; //intermediate via http communication
 
 
 //fuction calls for rover functionality:
@@ -69,12 +75,15 @@ void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   while(!Serial)
   {}
   initWiFi();
-  Serial1.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
-  Serial2.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
+  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
+  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
   //spi protocol for vision
   //SCLK = 0, MISO = 2, MOSI = 4, SS = 33, check if this works for GPIO
-  vspi->begin(VSPI_SCLK, VSPI_MISO, VSPI_MOSI, VSPI_SS);
+  vspi->begin(); //include for non standard pin allocation *VSPI_SCLK, VSPI_MISO, VSPI_MOSI, VSPI_SS*
   pinMode(VSPI_SS, OUTPUT);
+  SPI1.begin();
+  SPI1.beginTransaction(SPISettings(3000000, MSBFIRST, SPI_MODE2));
+
   //server connection
 }
 
@@ -135,9 +144,30 @@ void receivenewdriveinstr() //gets new instruction from the GUI
 
 }
 
-void senddriveinstr(int n) //where n comes from receivenewdriveinstr, sends to Drive Arduino
+void httpget()
 {
-  Serial2.write((n)val16); //is this required because base value of int is 16 bits long
+
+  if(WiFi.status()== WL_CONNECTED){
+      HTTPClient http;
+      http.begin(serverName);
+      httpCode = http.GET();
+      if (httpCode > 0) { //Check for the returning code
+
+        newdriveinstrimm = http.getString();
+        newdriveinstr = stoi(newdriveinstrimm);
+        Serial.println(httpCode);
+        Serial.println(newdriveinstr);
+
+}else {
+
+      Serial.println("Error with HTTP request, no instruction received.");
+}
+}
+
+
+void senddriveinstr(uint8_t n) //where n comes from receivenewdriveinstr, sends to Drive Arduino
+{
+  Serial1.write(n); //is this required because base value of int is 16 bits long
 }
 
 //main execute loop
@@ -152,11 +182,13 @@ void loop ()
   {
     batterycheck();
     emergencystop(warn);
+    httpget();
     receivenewdriveinstr();
     senddriveinstr(driveinstr);
     receivedrivedist();
 
     poweroff();
+    delay(2500);
 
   }
   Serial.println("rover turned off");
