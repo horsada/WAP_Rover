@@ -15,8 +15,7 @@
 #define VSPI_SCLK   0
 #define VSPI_SS     33
 */
-static const int spiClk = 1000000;
-SPIClass SPI1(HSPI);
+
 //internet settings to connect to HTTPS server:
 String serverName = "http://192.168.1.106:1880/update-sensor"; //change this to server IP and port
 int httpCode;
@@ -77,13 +76,6 @@ void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   initWiFi();
   Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
   Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
-  //spi protocol for vision
-  //SCLK = 0, MISO = 2, MOSI = 4, SS = 33, check if this works for GPIO
-  vspi->begin(); //include for non standard pin allocation *VSPI_SCLK, VSPI_MISO, VSPI_MOSI, VSPI_SS*
-  pinMode(VSPI_SS, OUTPUT);
-  SPI1.begin();
-  SPI1.beginTransaction(SPISettings(3000000, MSBFIRST, SPI_MODE2));
-
   //server connection
 }
 
