@@ -75,9 +75,11 @@ void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   Serial.begin(115200);
   while(!Serial)
   {}
+  Serial.println("starting up");
   initWiFi();
-  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
-  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
+  Serial.println("setup finished");
+  //Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
+  //Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
   //server connection
 }
 
@@ -168,9 +170,7 @@ void senddriveinstr(uint8_t n) //where n comes from receivenewdriveinstr, sends 
 void loop ()
 {
 
-  Serial.println("starting up");
-  setup();
-  Serial.println("setup finished");
+
 //rover function, will get stuck in while loop
   while (poweron)
   {
