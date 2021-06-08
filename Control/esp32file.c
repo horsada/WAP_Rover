@@ -74,8 +74,8 @@ void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   while(!Serial)
   {}
   initWiFi();
-  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
-  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
+  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
   //server connection
 }
 
@@ -106,7 +106,7 @@ void poweroff() //turns off ESP32
 
 void receivedrivedist() //get distance travelled from arduino
 {
-  dist = Serial2.read(); //do I require to decode this info? also if 8bit count am I limited to 2^8?
+  dist = Serial1.read(); //do I require to decode this info? also if 8bit count am I limited to 2^8?
   Serial.print("Distance Travelled = ");
   Serial.println(dist, DEC);
   senddistinfo(dist);
