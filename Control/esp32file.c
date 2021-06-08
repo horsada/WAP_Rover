@@ -17,8 +17,10 @@
 */
 
 //internet settings to connect to HTTPS server:
-String serverName = "http://192.168.1.106:1880/update-sensor"; //change this to server IP and port
+String serverName = "http://jsonplaceholder.typicode.com/comments?id=10"; //change this to server IP and port
 int httpCode;
+String payload;
+HTTPClient http;
 
 const char* ssid = "Sindhu"; //change this to your wifi on integration side
 const char* pw = "Butterchicken"; //likewise
@@ -139,16 +141,16 @@ void receivenewdriveinstr() //gets new instruction from the GUI
 void httpget()
 {
 
-  if(WiFi.status()== WL_CONNECTED){
-      HTTPClient http;
+
       http.begin(serverName);
       httpCode = http.GET();
       if (httpCode > 0) { //Check for the returning code
 
-        newdriveinstrimm = http.getString();
-        newdriveinstr = stoi(newdriveinstrimm);
-        Serial.println(httpCode);
-        Serial.println(newdriveinstr);
+        //newdriveinstrimm = http.getString();
+        //newdriveinstr = stoi(newdriveinstrimm);
+        //Serial.println(httpCode);
+        //Serial.println(newdriveinstr);
+        payload = http.getString();
 
 }else {
 
@@ -175,12 +177,13 @@ void loop ()
     batterycheck();
     emergencystop(warn);
     httpget();
-    receivenewdriveinstr();
-    senddriveinstr(driveinstr);
-    receivedrivedist();
+    Serial.println(payload);
+    //receivenewdriveinstr();
+    //senddriveinstr(driveinstr);
+  //  receivedrivedist();
 
-    poweroff();
-    delay(2500);
+  //  poweroff();
+    //delay(2500);
 
   }
   Serial.println("rover turned off");
