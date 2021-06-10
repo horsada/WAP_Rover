@@ -144,7 +144,12 @@ void loop() {
 
       -----> rotation implies no front-back movement and vice-versa
   */
-  int instr_read = Serial.read();
+  int instr_read = Serial.parseInt();
+  
+  Serial.print('\n');
+  Serial.println(instr_read);
+  Serial.print('\n');
+  
   if (instr_read)
     last_instr = instr_read;
 
@@ -156,6 +161,14 @@ void loop() {
   instr_combined /= 10;
 
   int instr_dir = instr_combined;
+
+  Serial.print('\n');
+  Serial.print(instr_speed);
+  Serial.print(' ');
+  Serial.print(instr_rot);
+  Serial.print(' ');
+  Serial.print(instr_dir);
+  Serial.print(' ');
   
   if (instr_dir)
   {
@@ -164,6 +177,8 @@ void loop() {
       //front
       DIRRstate = HIGH;
       DIRLstate = LOW;
+      digitalWrite(DIRR, DIRRstate);
+      digitalWrite(DIRL, DIRLstate); 
       digitalWrite(pwmr, HIGH);
       digitalWrite(pwml, HIGH);
     }
@@ -172,6 +187,8 @@ void loop() {
       //back
       DIRRstate = LOW;
       DIRLstate = HIGH;
+      digitalWrite(DIRR, DIRRstate);
+      digitalWrite(DIRL, DIRLstate); 
       digitalWrite(pwmr, HIGH);
       digitalWrite(pwml, HIGH);
     }
@@ -185,6 +202,8 @@ void loop() {
         //clockwise
         DIRRstate = HIGH;
         DIRLstate = HIGH;
+        digitalWrite(DIRR, DIRRstate);
+        digitalWrite(DIRL, DIRLstate); 
         digitalWrite(pwmr, HIGH);
         digitalWrite(pwml, HIGH); 
       }
@@ -193,6 +212,8 @@ void loop() {
         //anti-clockwise
         DIRRstate = LOW;
         DIRLstate = LOW;
+        digitalWrite(DIRR, DIRRstate);
+        digitalWrite(DIRL, DIRLstate); 
         digitalWrite(pwmr, HIGH);
         digitalWrite(pwml, HIGH); 
       }
@@ -209,8 +230,6 @@ void loop() {
   
   Serial.println("Distance_x = " + String(total_x));
   Serial.println("Distance_y = " + String(total_y));
-  
-  Serial.print('\n');
   
   //-------------------------------------------------------------------------------------------------------------------------------
   
