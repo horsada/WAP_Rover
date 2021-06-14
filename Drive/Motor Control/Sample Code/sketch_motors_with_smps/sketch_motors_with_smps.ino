@@ -7,12 +7,13 @@
 
 #include <Wire.h>
 #include <INA219_WE.h>
+#include "optical_lib.h"
 
 INA219_WE ina219; // this is the instantiation of the library for the current sensor
 
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,vref,iL,dutyref,current_mA; // Measurement Variables
-unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
+unsigned int sensorValue0,sensorValue1,sensorValue2 = 0,sensorValue3;  // ADC sample values declaration
 float ev=0,cv=0,ei=0,oc=0; //internal signals
 float Ts=0.0008; //1.25 kHz control frequency. It's better to design the control period as integral multiple of switching period.
 float kpv=0.05024,kiv=15.78,kdv=0; // voltage pid.
@@ -51,7 +52,28 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 
 
 void setup() {
+ //OPTICAL SENSOR SETUP
+  
+  pinMode(PIN_SS,OUTPUT);
+  pinMode(PIN_MISO,INPUT);
+  pinMode(PIN_MOSI,OUTPUT);
+  pinMode(PIN_SCK,OUTPUT);
+  
+  SPI.begin();
+  SPI.setClockDivider(SPI_CLOCK_DIV32);
+  SPI.setDataMode(SPI_MODE3);
+  SPI.setBitOrder(MSBFIRST);
+  
+  Serial.begin(9600);
 
+  if(mousecam_init()==-1)
+  {
+    Serial.println("Mouse cam failed to init");
+    while(1);
+  } 
+  
+  //--------------------------------------------------------------------------
+  
   //************************** Motor Pins Defining **************************//
   pinMode(DIRR, OUTPUT);
   pinMode(DIRL, OUTPUT);
@@ -88,6 +110,8 @@ void setup() {
   Wire.setClock(700000); // set the comms speed for i2c
   
 }
+
+byte last_instr = 101;
 
  void loop() {
   unsigned long currentMillis = millis();
@@ -137,45 +161,104 @@ void setup() {
     digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
   }
+  int val = mousecam_read_reg(ADNS3080_PIXEL_SUM);
+  MD md;
+  mousecam_read_motion(&md);
+
+  distance_x = md.dx; //convTwosComp(md.dx);
+  distance_y = md.dy; //convTwosComp(md.dy);
+
+  total_x1 = (total_x1 + distance_x);
+  total_y1 = (total_y1 + distance_y);
+  
+  total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
+  total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
   
   //************************** Motor Testing **************************//
   //this part of the code decides the direction of motor rotations depending on the time lapsed. currentMillis records the time lapsed once it is called.
+  if (Serial.available())
+  {
+    last_instr = Serial.read();
+    Serial.println(last_instr);
+  }
   
-  //moving forwards
-  if (currentMillis < f_i) {
-    DIRRstate = HIGH;
-    DIRLstate = LOW;
-    
+  int instr_combined = last_instr;
+  int instr_speed = instr_combined % 10;
+  instr_combined /= 10;
+  
+  int instr_rot = instr_combined %10;
+  instr_combined /= 10;
+
+  int instr_dir = instr_combined;
+
+  //speed control
+  sensorValue2 = 350 + ((1023-350) * instr_speed /9);
+  Serial.println(sensorValue2);
+
+  Serial.print('\n');
+  Serial.print(instr_speed);
+  Serial.print(' ');
+  Serial.print(instr_rot);
+  Serial.print(' ');
+  Serial.print(instr_dir);
+  Serial.print(' ');
+
+  if (instr_dir)
+  {
+    if (instr_dir == 1)
+    {
+      //front
+      DIRRstate = HIGH;
+      DIRLstate = LOW;
+      digitalWrite(DIRR, DIRRstate);
+      digitalWrite(DIRL, DIRLstate); 
+      digitalWrite(pwmr, HIGH);
+      digitalWrite(pwml, HIGH);
+    }
+    else
+    {
+      //back
+      DIRRstate = LOW;
+      DIRLstate = HIGH;
+      digitalWrite(DIRR, DIRRstate);
+      digitalWrite(DIRL, DIRLstate); 
+      digitalWrite(pwmr, HIGH);
+      digitalWrite(pwml, HIGH);
+    }
   }
-  //rotating clockwise
-  if (currentMillis > f_i && currentMillis <r_i) {
-    DIRRstate = HIGH;
-    DIRLstate = HIGH;
-    
+  else
+  {
+    if (instr_rot)
+    {
+      if (instr_rot == 1)
+      {
+        //clockwise
+        DIRRstate = HIGH;
+        DIRLstate = HIGH;
+        digitalWrite(DIRR, DIRRstate);
+        digitalWrite(DIRL, DIRLstate); 
+        digitalWrite(pwmr, HIGH);
+        digitalWrite(pwml, HIGH); 
+      }
+      else
+      {
+        //anti-clockwise
+        DIRRstate = LOW;
+        DIRLstate = LOW;
+        digitalWrite(DIRR, DIRRstate);
+        digitalWrite(DIRL, DIRLstate); 
+        digitalWrite(pwmr, HIGH);
+        digitalWrite(pwml, HIGH); 
+      }
+    }
+    else
+    {
+      //stop motors
+      digitalWrite(pwmr, LOW);
+      digitalWrite(pwml, LOW);
+    }
   }
 
-  //moving backwards
-  if (currentMillis > r_i && currentMillis <b_i) {
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-    
-  }
-  //rotating anticlockwise
-  if (currentMillis > b_i && currentMillis <l_i) {
-    DIRRstate = LOW;
-    DIRLstate = LOW;
-    
-  }
-
-  //set your states
-  if (currentMillis > l_i) {
-    DIRRstate = LOW;
-    DIRLstate = LOW;
-    
-  }
-
-    digitalWrite(DIRR, DIRRstate);
-    digitalWrite(DIRL, DIRLstate); 
   //*******************************************************************//
 
 
@@ -198,7 +281,8 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  //sensorValue2 = analogRead(A2); //sample Vref
+  //Serial.println(sensorValue2);
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 

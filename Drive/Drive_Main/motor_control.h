@@ -8,7 +8,7 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,vref,iL,dutyref,current_mA; // Measurement Variables
-unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
+unsigned int sensorValue0,sensorValue1,sensorValue2 = 0,sensorValue3;  // ADC sample values declaration
 float ev=0,cv=0,ei=0,oc=0; //internal signals
 float Ts=0.0008; //1.25 kHz control frequency. It's better to design the control period as integral multiple of switching period.
 float kpv=0.05024,kiv=15.78,kdv=0; // voltage pid.
@@ -59,7 +59,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  //sensorValue2 = analogRead(A2); //sample Vref
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 

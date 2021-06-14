@@ -15,7 +15,7 @@ void setup() {
   SPI.setDataMode(SPI_MODE3);
   SPI.setBitOrder(MSBFIRST);
   
-  Serial.begin(38400);
+  Serial.begin(9600);
 
   if(mousecam_init()==-1)
   {
@@ -62,7 +62,7 @@ void setup() {
   Wire.setClock(700000); // set the comms speed for i2c
 }
 
-int last_instr = 0;
+byte last_instr = 0;
 
 void loop() {
 
@@ -144,15 +144,12 @@ void loop() {
 
       -----> rotation implies no front-back movement and vice-versa
   */
-  int instr_read = Serial.parseInt();
+  if (Serial.available())
+  {
+    last_instr = Serial.read();
+    Serial.println(last_instr);
+  }
   
-  Serial.print('\n');
-  Serial.println(instr_read);
-  Serial.print('\n');
-  
-  if (instr_read)
-    last_instr = instr_read;
-
   int instr_combined = last_instr;
   int instr_speed = instr_combined % 10;
   instr_combined /= 10;
@@ -162,14 +159,16 @@ void loop() {
 
   int instr_dir = instr_combined;
 
+  //speed control
+  sensorValue2 = 350 + ((1023-350) * instr_speed /9);
   Serial.print('\n');
   Serial.print(instr_speed);
   Serial.print(' ');
   Serial.print(instr_rot);
   Serial.print(' ');
   Serial.print(instr_dir);
-  Serial.print(' ');
-  
+  Serial.print('\n');
+
   if (instr_dir)
   {
     if (instr_dir == 1)
@@ -226,11 +225,8 @@ void loop() {
     }
   }
     
-  Serial.print('\n');
-  
   Serial.println("Distance_x = " + String(total_x));
   Serial.println("Distance_y = " + String(total_y));
   
   //-------------------------------------------------------------------------------------------------------------------------------
-  
 }
