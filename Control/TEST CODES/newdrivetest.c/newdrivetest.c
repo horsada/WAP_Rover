@@ -20,7 +20,7 @@ void setup()
   Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
   while (!Serial1)
   {}
-  
+
 }
 
 void loop()
