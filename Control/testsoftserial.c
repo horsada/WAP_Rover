@@ -4,11 +4,9 @@
 #include<string.h>
 #include<sys/types.h>
 #include<sys/socket.h>
-//#include "arpa/inet.h"
 #include<sys/un.h>
 #include<stdlib.h>
 #include<unistd.h>
-
 
 #define PORTNUM 18000
 //pin def for UART for energy
@@ -36,7 +34,8 @@ char *msg[30];//change 30 into whichever max stat
 char buf[256];
 char instruction[3];
 char roverstatus[128];
-//struct sockaddr_in sint;
+long int visioncalc;
+struct sockaddr_in sin;
 
 
 const char* ssid = "Sindhu"; //change this to your wifi on integration side
@@ -87,23 +86,22 @@ void initWiFi() { //initializes wifi connection
   Serial.print(WiFi.localIP());
 }
 
-/*void serversetup() //taken from andy
+void serversetup(); //taken from andy
 {
   if ((sd=socket(AF_INET,SOCK_STREAM,0))==-1){
-    perror("socket");
-    exit(1);
-  }
-  memset ((char*)&sint,'\0',sizeof(sint));
-  sint.sint_family=AF_INET;
-  sint.sint_port=htons(PORTNUM);
-  sin.sint_addr.s_addr=inet_addr("104.45.192.134");
+		perror("socket");
+		exit(1);
+	}
+	memset ((char*)&sin,'\0',sizeof(sin));
+	sin.sin_family=AF_INET;
+	sin.sin_port=htons(PORTNUM);
+	sin.sin_addr.s_addr=inet_addr("104.45.192.134");
 
-  if (connect(sd,(struct sockaddr *)&sint,sizeof(sint))){
-    perror("connect");
-    exit(1);
-  }
+	if (connect(sd,(struct sockaddr *)&sin,sizeof(sin))){
+		perror("connect");
+		exit(1);
+	}
 }
-*/
 
 void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   Serial.begin(115200);
@@ -112,12 +110,12 @@ void setup() { //setups ESP32 controller connections: Wifi, SPI and UART
   Serial.println("starting up");
   initWiFi();
   Serial.println("wifi connected");
-  //serversetup();
-  Serial.println("connected to server");
+  serversetup();
+  Serial.println("connected to server")
   Serial.println("setup finished");
-  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
-  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
-  SoftSerial3.begin(9600, SERIAL_8N1, RXD3, TXD3); //For Uart FPGA connection
+  //Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); //for energy, may need to change baud rate
+  //Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); //for drive, figure out arduino uno max baud rate
+  Serial3.begin(9600, SWSERIAL_8N1, RXD1, TXD1); //For Uart FPGA connection
   //server connection
 }
 
@@ -129,17 +127,17 @@ void emergencystop() //direct communication between Vision and Drive. Used to st
   }
 }
 
-/*void serverreceive();
+void serverreceive();
 {
   if (recv(sd,buf,sizeof(buf),0)==-1){
-      perror("recv");
-      exit(1);
-    }
+			perror("recv");
+			exit(1);
+		}
 
-    printf("%s\n",buf);
+		printf("%s\n",buf);
 
-    //copy out of this "instruction" variable to get the integer number that represents the instruction
-    strcpy(instruction,buf);
+		//copy out of this "instruction" variable to get the integer number that represents the instruction
+		strcpy(instruction,buf);
     newdriveinstr = stoi(instruction);
 
 }
@@ -147,22 +145,22 @@ void emergencystop() //direct communication between Vision and Drive. Used to st
 void serversend();
 {
 
-    strcpy(roverstatus, "battery 10, blah blah");
-    sprintf(msg,"%s",roverstatus);
+		strcpy(roverstatus, "battery 10, blah blah");
+		sprintf(msg,"%s",roverstatus);
 
-    if (send(sd,msg,strlen(msg)+1,0)==-1){
-      perror("send");
-      exit(1);
-    }
+		if (send(sd,msg,strlen(msg)+1,0)==-1){
+			perror("send");
+			exit(1);
+		}
 
-    if(recv(sd,buf,sizeof(buf),0)==-1){
-      perror("recv result");
-      exit(1);
-    }
+		if(recv(sd,buf,sizeof(buf),0)==-1){
+			perror("recv result");
+			exit(1);
+		}
 
-    printf("%s\n",buf);
+		printf("%s\n",buf);
 }
-*/
+
 void batterycheck() //Energy - ESP32 - Command. Used to update GUI of battery level of the rover
 {
   batterylevel = Serial1.read();
@@ -189,9 +187,9 @@ void receivedrivedist() //get distance travelled from arduino
 
 }
 
-void senddistinfo(int n) //sends distance to GUI
+void senddistinfo(uint8_t n) //sends distance to GUI
 {
-  //implement send to server
+
 }
 
 void receivenewdriveinstr() //gets new instruction from the GUI
@@ -207,7 +205,7 @@ void receivenewdriveinstr() //gets new instruction from the GUI
 
 }
 
-/*void httpget() //replace with new code
+void httpget() //replace with new code
 {
 
 
@@ -226,35 +224,38 @@ void receivenewdriveinstr() //gets new instruction from the GUI
       Serial.println("Error with HTTP request, no instruction received.");
 }
 }
-*/
+
 
 void senddriveinstr(uint8_t n) //where n comes from receivenewdriveinstr, sends to Drive Arduino
 {
   Serial1.write(n); //is this required because base value of int is 16 bits long
 }
 
+void receivevision()
+{
+if (Serial3.available() > 0)
+{
+visioncalc = Serial3.read();
+}
+}
+
+void calculatevision()
+{}
+
+
 //main execute loop
-void loop ()
+void loop())
 {
 
-
+  Serial.println("ESP32 READY");
 //rover function, will get stuck in while loop
   while (poweron)
   {
 
-    //serverreceive();
-    //delay(500);
-    //serversend();
+    recievevision();
+    serial.Println()
 
-    //emergencystop(warn);
-    //httpget();
-    //Serial.println(payload);
-    //receivenewdriveinstr();
-    //senddriveinstr(driveinstr);
-  //  receivedrivedist();
 
-  //  poweroff();
-    //delay(2500);
 
   }
   Serial.println("rover turned off");
